@@ -9,6 +9,18 @@ import torch
 from shikishi import __version__
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean value")
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     root_dir: Path
@@ -33,6 +45,9 @@ class Settings:
     ip_adapter_face_weight_name: str
     ip_adapter_revision: str | None
     base_model_override: str | None
+    require_cuda: bool
+    demo_warmup: bool
+    demo_preload_ip_adapter: bool
 
     @classmethod
     def from_environment(cls) -> Settings:
@@ -76,4 +91,7 @@ class Settings:
             )
             or None,
             base_model_override=os.getenv("BASE_MODEL") or None,
+            require_cuda=_env_bool("REQUIRE_CUDA", False),
+            demo_warmup=_env_bool("DEMO_WARMUP", False),
+            demo_preload_ip_adapter=_env_bool("DEMO_PRELOAD_IP_ADAPTER", False),
         )
