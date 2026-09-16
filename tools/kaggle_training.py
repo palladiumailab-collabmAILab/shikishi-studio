@@ -130,8 +130,7 @@ def validate_downloaded_output(run_dir: Path) -> tuple[Path, dict[str, object]]:
     result_paths = list(run_dir.rglob("shikishi-training-result.json"))
     if len(result_paths) != 1:
         raise RuntimeError(
-            "Expected exactly one shikishi-training-result.json, "
-            f"found {len(result_paths)}"
+            f"Expected exactly one shikishi-training-result.json, found {len(result_paths)}"
         )
     metadata = json.loads(result_paths[0].read_text(encoding="utf-8"))
     artifact = metadata.get("artifact")

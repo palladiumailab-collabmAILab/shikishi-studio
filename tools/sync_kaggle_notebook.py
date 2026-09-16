@@ -62,10 +62,7 @@ def build_notebook(source_path: Path, template_path: Path) -> dict[str, Any]:
 
 
 def _normalized_cells(cells: list[dict[str, Any]]) -> list[tuple[str, str]]:
-    return [
-        (str(cell.get("cell_type")), "".join(cell.get("source", [])).rstrip())
-        for cell in cells
-    ]
+    return [(str(cell.get("cell_type")), "".join(cell.get("source", [])).rstrip()) for cell in cells]
 
 
 def synchronized(source_path: Path, notebook_path: Path) -> bool:

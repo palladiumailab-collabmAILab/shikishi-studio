@@ -32,9 +32,7 @@ def test_kernel_metadata_is_private_gpu_training() -> None:
     assert metadata["id"] == "palladiumailab/notebook27d1a07f12"
     assert metadata["is_private"] is True
     assert metadata["enable_gpu"] is True
-    assert metadata["dataset_sources"] == [
-        "palladiumailab/shikishi-ixy-style-v2-goal-v1"
-    ]
+    assert metadata["dataset_sources"] == ["palladiumailab/shikishi-ixy-style-v2-goal-v1"]
 
 
 def test_downloaded_output_must_match_result_sha(tmp_path: Path) -> None:

@@ -48,6 +48,10 @@ extend-exclude = ["colab", "*.ipynb"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.format]
+# Preserve the cell-oriented canonical source; notebook drift has its own check.
+exclude = ["kaggle/illustrious_xl_style_lora.py"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
