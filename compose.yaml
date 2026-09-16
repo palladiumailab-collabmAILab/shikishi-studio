@@ -4,8 +4,6 @@ services:
       context: .
       target: development
     working_dir: /app
-    environment:
-      KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN:-}
     volumes:
       - .:/app
 
@@ -14,15 +12,16 @@ services:
     container_name: shikishi-studio
     gpus: all
     ports:
-      - "8002:8000"
+      - "${SHIKISHI_BIND_HOST:-127.0.0.1}:8002:8000"
     environment:
-      KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN:-}
-      # Change this to a mounted local directory to avoid downloading the base model.
       BASE_MODEL: ${BASE_MODEL:-MX4T/Illustrious-XL-v2.0-diffusers}
       IP_ADAPTER_WEIGHT_NAME: ${IP_ADAPTER_WEIGHT_NAME:-ip-adapter-plus_sdxl_vit-h.safetensors}
       IP_ADAPTER_FACE_WEIGHT_NAME: ${IP_ADAPTER_FACE_WEIGHT_NAME:-ip-adapter-plus-face_sdxl_vit-h.safetensors}
       IP_ADAPTER_IMAGE_ENCODER_SUBFOLDER: ${IP_ADAPTER_IMAGE_ENCODER_SUBFOLDER:-models/image_encoder}
       HF_HOME: /models/huggingface
+      REQUIRE_CUDA: ${REQUIRE_CUDA:-1}
+      DEMO_WARMUP: ${DEMO_WARMUP:-1}
+      DEMO_PRELOAD_IP_ADAPTER: ${DEMO_PRELOAD_IP_ADAPTER:-1}
     volumes:
       - ./models:/app/models
       - ./generated:/app/generated
@@ -30,10 +29,26 @@ services:
       - hf-cache:/models/huggingface
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/readyz')"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 15m
+
+  kaggle-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.kaggle
+    working_dir: /workspace
+    environment:
+      KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN:-}
+      KAGGLE_MACHINE_SHAPE: ${KAGGLE_MACHINE_SHAPE:-NvidiaTeslaT4}
+      SHIKISHI_GIT_REVISION: ${SHIKISHI_GIT_REVISION:-unknown}
+    volumes:
+      - ./kaggle:/workspace/kaggle:ro
+      - ./tools:/workspace/tools:ro
+      - ./artifacts/kaggle:/workspace/artifacts
+    profiles: ["ops"]
 
 volumes:
   hf-cache:

@@ -11,6 +11,7 @@ downloads/
 dataset/processed/
 dataset/reports/
 dataset/kaggle_input/
+artifacts/kaggle/
 .env
 .codex-remote-attachments/
 logs/
