@@ -58,3 +58,7 @@ strict = true
 mypy_path = ["src"]
 files = ["src", "app.py", "studio"]
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["transformers", "transformers.*"]
+ignore_missing_imports = true
