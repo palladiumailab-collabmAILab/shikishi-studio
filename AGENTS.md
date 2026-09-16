@@ -42,7 +42,8 @@ changes. Add domain-specific decisions here as the application is defined.
   only when a material dependency choice is open, and
   [skills/codebase-health-review/SKILL.md](skills/codebase-health-review/SKILL.md)
   only for explicit cleanup or repository-health work.
-- Keep application code in `src/shikishi/` and tests in `tests/`.
+- Keep reusable CLI and data-processing code in `src/shikishi/`, web/API code in
+  `app.py` and `studio/`, browser assets in `static/`, and tests in `tests/`.
 - Validate data at external boundaries and raise actionable errors. Never
   silently discard invalid input.
 - Preserve source data. Write transformed data and generated artifacts to
@@ -66,7 +67,7 @@ changes. Add domain-specific decisions here as the application is defined.
   `docker compose run --rm app python -m ruff format --check .`, `docker
   compose run --rm app python -m mypy`, and `docker compose run --rm app
   python -m pytest`.
-- The Git pre-commit hook runs the same checks in temporary Docker containers.
+- GitHub Actions and the Git pre-commit hook run the same checks in Docker.
 - Documentation-only and other narrowly scoped changes may use a smaller check
   when the omitted gates cannot exercise the changed surface.
 - Do not claim a check passed unless it was actually run.
