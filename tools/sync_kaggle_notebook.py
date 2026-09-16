@@ -61,10 +61,20 @@ def build_notebook(source_path: Path, template_path: Path) -> dict[str, Any]:
     return notebook
 
 
+def _normalized_cells(cells: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    return [
+        (str(cell.get("cell_type")), "".join(cell.get("source", [])).rstrip())
+        for cell in cells
+    ]
+
+
 def synchronized(source_path: Path, notebook_path: Path) -> bool:
     actual = json.loads(notebook_path.read_text(encoding="utf-8"))
     expected = source_cells(source_path.read_text(encoding="utf-8"))
-    return actual.get("cells") == expected
+    actual_cells = actual.get("cells")
+    if not isinstance(actual_cells, list):
+        return False
+    return _normalized_cells(actual_cells) == _normalized_cells(expected)
 
 
 def write_notebook(source_path: Path, template_path: Path, output_path: Path) -> None:
