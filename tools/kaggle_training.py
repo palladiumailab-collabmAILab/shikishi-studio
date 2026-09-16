@@ -206,7 +206,8 @@ def run(args: argparse.Namespace) -> int:
         current_status = kernel_status(kernel_id, allow_missing=True)
         if current_status in ACTIVE_STATUSES:
             raise RuntimeError(
-                f"Kaggle kernel already has an active run ({current_status}); refusing to replace it"
+                f"Kaggle kernel already has an active run ({current_status}); "
+                "refusing to replace it"
             )
 
         run_id = f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
