@@ -1,3 +1,4 @@
+# ruff: noqa: E402, I001
 from __future__ import annotations
 
 import hashlib
@@ -10,13 +11,13 @@ import pytest
 PROJECT_ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
-from kaggle_training import (  # noqa: E402
+from kaggle_training import (
     exclusive_run_lock,
     load_metadata,
     parse_status,
     validate_downloaded_output,
 )
-from sync_kaggle_notebook import source_cells, synchronized  # noqa: E402
+from sync_kaggle_notebook import source_cells, synchronized
 
 
 def test_parse_kaggle_status() -> None:
@@ -31,7 +32,9 @@ def test_kernel_metadata_is_private_gpu_training() -> None:
     assert metadata["id"] == "palladiumailab/notebook27d1a07f12"
     assert metadata["is_private"] is True
     assert metadata["enable_gpu"] is True
-    assert metadata["dataset_sources"] == ["palladiumailab/shikishi-ixy-style-v2-goal-v1"]
+    assert metadata["dataset_sources"] == [
+        "palladiumailab/shikishi-ixy-style-v2-goal-v1"
+    ]
 
 
 def test_downloaded_output_must_match_result_sha(tmp_path: Path) -> None:
