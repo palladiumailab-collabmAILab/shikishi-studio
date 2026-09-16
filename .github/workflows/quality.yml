@@ -1,0 +1,44 @@
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build quality image
+        run: docker compose build app
+
+      - name: Ruff lint
+        run: docker compose run --rm app python -m ruff check .
+
+      - name: Ruff format
+        run: docker compose run --rm app python -m ruff format --check .
+
+      - name: Mypy
+        run: docker compose run --rm app python -m mypy
+
+      - name: Pytest
+        run: docker compose run --rm app python -m pytest
+
+      - name: Verify Kaggle notebook synchronization
+        run: docker compose run --rm app python tools/sync_kaggle_notebook.py --check
+
+      - name: Build and inspect Kaggle runner
+        run: |
+          docker build -f Dockerfile.kaggle -t shikishi-kaggle-runner .
+          docker run --rm shikishi-kaggle-runner --help

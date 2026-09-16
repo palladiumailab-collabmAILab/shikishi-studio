@@ -75,8 +75,6 @@ class ImageGenerator:
         self._settings = settings
         self._history_store = history_store
         self._reference_images = reference_images
-        # Diffusers attaches adapter methods dynamically and its type information
-        # does not describe the runtime API. Keep that uncertainty at this boundary.
         self._pipelines: dict[str, Any] = {}
         self._img2img_pipelines: dict[str, Any] = {}
         self._lock = Lock()
@@ -84,6 +82,21 @@ class ImageGenerator:
     @property
     def is_ready(self) -> bool:
         return bool(self._pipelines)
+
+    def prepare(self, model: ModelSpec, *, include_ip_adapter: bool = False) -> None:
+        """Load the configured model before a demo and populate required caches."""
+        with self._lock:
+            pipeline = self._get_pipeline(model)
+            if not include_ip_adapter:
+                return
+            self._load_ip_adapter(
+                pipeline,
+                0.01,
+                use_appearance=True,
+                use_face=True,
+                face_scale=0.01,
+            )
+            self._unload_ip_adapter(pipeline)
 
     def generate(self, request: GenerateRequest, model: ModelSpec) -> list[GeneratedImage]:
         with self._lock:
@@ -312,12 +325,6 @@ class ImageGenerator:
                 image_encoder_folder=None,
                 revision=self._settings.ip_adapter_revision,
             )
-            # ``from_pipe`` can leave newly loaded IP-Adapter projection layers in
-            # float32 while the shared SDXL UNet is float16.  Keep those layers in
-            # the configured inference dtype before Accelerate installs offload hooks.
-            # Cast the complete composed pipeline together.  With ``from_pipe``,
-            # casting only the newly attached UNet processors can leave prompt
-            # embeddings/latents in float32 while the denoiser is float16.
             pipeline.to(dtype=self._settings.torch_dtype)
             if self._settings.device == "cuda":
                 pipeline.enable_model_cpu_offload()
@@ -330,10 +337,6 @@ class ImageGenerator:
                 rollback_failed = True
                 logger.exception("IP-Adapter rollback failed; cached pipelines were discarded")
             finally:
-                # Img2img pipelines created with ``from_pipe`` share modules with
-                # the text-to-image pipeline.  A failed adapter load can therefore
-                # poison more than the object passed here.  Rebuild all pipelines
-                # on the next request instead of guessing which modules changed.
                 self._discard_pipeline_cache()
             rollback_note = (
                 " ロールバックが完了しなかったため、パイプラインキャッシュを破棄しました。"
@@ -362,7 +365,7 @@ class ImageGenerator:
         def attempt(label: str, action: Callable[[], object]) -> None:
             try:
                 action()
-            except Exception as exc:  # third-party cleanup must continue after a failure
+            except Exception as exc:
                 errors.append((label, exc))
 
         attempt("remove hooks", pipeline.remove_all_hooks)

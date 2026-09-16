@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import cast
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from studio.schemas import (
     CharacterProfileSummary,
@@ -169,6 +170,24 @@ def cancel_job(job_id: str, request: Request) -> JobResponse:
 @router.get("/healthz")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@router.get("/readyz")
+def readiness(request: Request) -> JSONResponse:
+    settings = request.app.state.settings
+    issues: list[str] = []
+    if settings.require_cuda and settings.device != "cuda":
+        issues.append("cuda_unavailable")
+    if not job_queue(request).is_ready:
+        issues.append("model_not_loaded")
+    for path, name in (
+        (settings.output_dir, "output_not_writable"),
+        (settings.reference_dir, "reference_not_writable"),
+    ):
+        if not path.is_dir() or not os.access(path, os.W_OK):
+            issues.append(name)
+    payload = {"status": "ready" if not issues else "not_ready", "issues": issues}
+    return JSONResponse(status_code=200 if not issues else 503, content=payload)
 
 
 @router.get("/download/{filename}")

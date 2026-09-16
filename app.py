@@ -23,8 +23,9 @@ def create_app() -> FastAPI:
     registry = ModelRegistry(settings)
     character_profiles = CharacterProfileStore(settings)
     reference_images = ReferenceImageStore(settings)
+    generator = ImageGenerator(settings, history_store, reference_images)
     job_queue = GenerationQueue(
-        ImageGenerator(settings, history_store, reference_images),
+        generator,
         registry,
         settings.max_queue_size,
         job_retention_seconds=settings.job_retention_seconds,
@@ -33,9 +34,18 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if settings.require_cuda and settings.device != "cuda":
+            raise RuntimeError("CUDA is required for this deployment but is not available")
+        if settings.demo_warmup:
+            generator.prepare(
+                registry.get(None),
+                include_ip_adapter=settings.demo_preload_ip_adapter,
+            )
         job_queue.start()
-        yield
-        job_queue.stop()
+        try:
+            yield
+        finally:
+            job_queue.stop()
 
     application = FastAPI(title="Shikishi Studio", lifespan=lifespan)
     application.state.settings = settings
@@ -43,6 +53,7 @@ def create_app() -> FastAPI:
     application.state.model_registry = registry
     application.state.character_profiles = character_profiles
     application.state.reference_images = reference_images
+    application.state.image_generator = generator
     application.state.job_queue = job_queue
     application.mount("/static", StaticFiles(directory=settings.static_dir), name="static")
 
