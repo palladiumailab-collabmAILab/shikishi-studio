@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shikishi Studio</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260824-solo" />
+    <link rel="stylesheet" href="/static/reference.css?v=20260824-multiref1" />
+  </head>
+  <body>
+    <aside>
+      <div class="brand"><span>✦</span> Shikishi Studio</div>
+      <button id="new-chat" class="new-chat">＋ 新しい生成</button>
+      <div class="side-section"><p>使用モデル</p><select id="model"></select><small id="model-detail">読み込み中…</small></div>
+      <div class="side-section bottom"><p>学習済みウェイト</p><strong>step 3,000</strong><small>ixy_style.safetensors</small></div>
+    </aside>
+    <main>
+      <header><div><h1>画像をつくる</h1><p>プロンプトを会話のように入力してください。</p></div><div class="status-stack"><span id="status" class="status">準備中</span><span id="active-model" class="model-status">モデル読込中</span></div></header>
+      <section id="conversation" class="conversation">
+        <article class="assistant-message"><div class="avatar">✦</div><div><b>Shikishi Studio</b><p>ixy_style LoRA を読み込んで、あなたのイメージを形にします。人物名は英語タグ（例：hayase yuuka (blue archive)）が安定します。</p></div></article>
+      </section>
+      <section class="history-panel"><div class="history-heading"><h2>生成履歴</h2><button id="refresh-history">更新</button></div><div id="history" class="history-grid"><p>まだ生成履歴はありません。</p></div></section>
+      <section class="composer-wrap">
+        <form id="generator" class="composer">
+          <textarea id="prompt" required placeholder="例：hayase yuuka (blue archive), sunset, delicate illustration" rows="3"></textarea>
+          <div class="controls">
+            <label>品質<select id="quality-preset"><option value="draft">ドラフト</option><option value="standard" selected>標準</option><option value="high">高品質</option><option value="custom">カスタム</option></select></label>
+            <label>サイズ<select id="size"><option value="512x512">正方形 512</option><option value="1024x1024" selected>正方形 1024</option><option value="832x1216">縦長 832×1216</option><option value="1216x832">横長 1216×832</option></select></label>
+            <label>LoRA 強度 <input id="lora" type="range" min="0" max="1.5" step="0.05" value="0.85"><output id="lora-value">0.85</output></label>
+            <label class="single-subject" title="複数人・コラージュ構図を抑制します"><input id="single-subject" type="checkbox" checked />1人構図</label>
+            <label class="single-subject" title="頭身の極端なデフォルメを抑制します"><input id="standard-proportions" type="checkbox" checked />標準等身</label>
+            <button type="button" id="advanced-toggle" class="secondary">詳細</button>
+            <button id="submit" type="submit">生成する <span>↑</span></button>
+          </div>
+          <p id="quality-advice" class="quality-advice" hidden></p>
+          <div id="advanced" class="advanced" hidden>
+            <fieldset class="reference-controls">
+              <legend>キャラクター参照（最大6枚）</legend>
+              <label class="reference-upload">キャラ画像を追加<input id="character-reference-files" type="file" multiple accept="image/png,image/jpeg,image/webp" /></label>
+              <p id="character-reference-status" class="reference-status">顔、髪型、衣装が分かる画像を役割別に追加します。</p>
+              <div id="character-reference-list" class="reference-list"></div>
+              <label>全体・衣装強度 <input id="reference-ip-scale" type="range" min="0" max="1.5" step="0.05" value="0.30" /><output id="reference-ip-scale-value">0.30</output></label>
+              <label>顔強度 <input id="reference-face-ip-scale" type="range" min="0" max="1.5" step="0.05" value="0.25" /><output id="reference-face-ip-scale-value">0.25</output></label>
+              <label>顔仕上げ強度 <input id="reference-face-refinement-strength" type="range" min="0.1" max="0.5" step="0.05" value="0.20" /><output id="reference-face-refinement-strength-value">0.20</output></label>
+              <div class="pose-reference-section">
+                <strong>ポーズ・構図画像（任意）</strong>
+                <label class="reference-upload">ポーズ画像を選ぶ<input id="pose-reference-file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+                <button id="pose-reference-clear" type="button" class="secondary" hidden>ポーズ画像を解除</button>
+                <p id="pose-reference-status" class="reference-status">人物の位置や姿勢をimg2imgで誘導します。</p>
+                <div id="pose-reference-preview-wrap" class="reference-preview-wrap" hidden><img id="pose-reference-preview" alt="ポーズ画像の切り抜きプレビュー" /></div>
+                <label>ポーズ強度 <input id="pose-reference-strength" type="range" min="0.1" max="0.95" step="0.05" value="0.30" /><output id="pose-reference-strength-value">0.30</output></label>
+                <label>拡大 <input id="pose-reference-zoom" type="range" min="1" max="4" step="0.1" value="1" /><output id="pose-reference-zoom-value">1.0×</output></label>
+                <label>中心（左右）<input id="pose-reference-focus-x" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+                <label>中心（上下）<input id="pose-reference-focus-y" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+              </div>
+            </fieldset>
+            <label>ポーズ指示 <input id="pose-prompt" maxlength="300" placeholder="例：seated, hands resting on lap" /></label>
+            <label>ネガティブ <input id="negative" value="lowres, blurry, bad anatomy, text, watermark" /></label>
+            <label>キャラ補正 <select id="character-preset"><option value="">読込中…</option></select></label>
+            <label title="学習時の画風トリガーを自動追加します"><input id="use-trigger-words" type="checkbox" checked />画風トリガー</label>
+            <label>Steps <input id="steps" type="number" min="1" max="60" value="30" /></label>
+            <label>CFG <input id="cfg" type="number" min="0" max="20" step="0.5" value="5.5" /></label>
+            <label>Seed <input id="seed" type="number" min="0" placeholder="ランダム" /></label>
+            <label>枚数 <select id="count"><option value="1">1枚</option><option value="2">2枚</option><option value="4">4枚</option></select></label>
+          </div>
+        </form>
+        <p id="job-status" class="job-status" hidden></p>
+        <p class="hint">生成画像はローカルの <code>generated/</code> に保存されます。</p>
+      </section>
+    </main>
+    <template id="user-template"><article class="user-message"><div class="bubble"></div></article></template>
+    <template id="image-template"><article class="assistant-message result"><div class="avatar">✦</div><div><b>Shikishi Studio</b><div class="result-grid"></div></div></article></template>
+    <script type="module" src="/static/js/app.js?v=20260825-quality1"></script>
+  </body>
+</html>

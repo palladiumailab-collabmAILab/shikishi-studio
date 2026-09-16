@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    working_dir: /app
+    volumes:
+      - .:/app
+
+  shikishi:
+    build: .
+    container_name: shikishi-studio
+    gpus: all
+    ports:
+      - "8002:8000"
+    environment:
+      # Change this to a mounted local directory to avoid downloading the base model.
+      BASE_MODEL: ${BASE_MODEL:-MX4T/Illustrious-XL-v2.0-diffusers}
+      IP_ADAPTER_WEIGHT_NAME: ${IP_ADAPTER_WEIGHT_NAME:-ip-adapter-plus_sdxl_vit-h.safetensors}
+      IP_ADAPTER_FACE_WEIGHT_NAME: ${IP_ADAPTER_FACE_WEIGHT_NAME:-ip-adapter-plus-face_sdxl_vit-h.safetensors}
+      IP_ADAPTER_IMAGE_ENCODER_SUBFOLDER: ${IP_ADAPTER_IMAGE_ENCODER_SUBFOLDER:-models/image_encoder}
+      HF_HOME: /models/huggingface
+    volumes:
+      - ./models:/app/models
+      - ./generated:/app/generated
+      - ./reference-images:/app/reference-images
+      - hf-cache:/models/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  hf-cache:

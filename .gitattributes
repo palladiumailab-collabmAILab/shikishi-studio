@@ -1,0 +1,13 @@
+# Keep local/runtime artifacts out of source archives created with `git archive`.
+/.codex-remote-attachments export-ignore
+/.gitignore export-ignore
+/datasets export-ignore
+/downloads export-ignore
+/generated export-ignore
+/reference-images export-ignore
+/logs export-ignore
+/models/base export-ignore
+/models/loras/*.safetensors export-ignore
+/dataset/processed export-ignore
+/dataset/reports export-ignore
+/dataset/kaggle_input export-ignore

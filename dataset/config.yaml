@@ -1,0 +1,60 @@
+min_width: 512
+min_height: 512
+min_aspect_ratio: 0.25
+max_aspect_ratio: 4.0
+
+validation_ratio: 0.05
+random_seed: 42
+dominant_tag_warning_ratio: 0.75
+
+duplicate:
+  phash_enabled: true
+  phash_threshold: 5
+
+# These entries are removed only from the copied captions. Source files are
+# never changed. Add artist/character/copyright tags that are known locally.
+remove_tags:
+  - ixy
+  - ixy_style
+  - commentary
+  - commentary_request
+  - translation_request
+  - duplicate
+  - pixel-perfect_duplicate
+  - revision
+  - highres
+  - absurdres
+  - masterpiece
+  - best_quality
+  - high_quality
+  - bad_id
+  - bad_pixiv_id
+  - untranslatable_commentary
+remove_tag_patterns:
+  - '^artist:'
+  - '^character:'
+  - '^copyright:'
+remove_categories:
+  - artist
+  - character
+  - copyright
+  - meta
+# Optional CSV with columns "tag,category". It enables reliable removal of
+# Danbooru artist/character/copyright categories without guessing from text.
+tag_category_file: null
+
+quality_filter:
+  enabled: true
+  auto_delete: false
+  # Review only; automatic exclusion is reserved for unreadable, too-small,
+  # or extreme-aspect-ratio images.
+  review_tags:
+    - comic
+    - manga
+    - 4koma
+    - sketch
+    - lineart
+    - multiple_views
+    - text
+  jpeg_min_bytes_per_pixel: 0.04
+  high_blank_ratio: 0.92

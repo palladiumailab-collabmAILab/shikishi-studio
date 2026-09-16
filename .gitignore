@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+generated/*.png
+generated/*.jpg
+generated/*.json
+reference-images/
+models/base/
+datasets/
+downloads/
+dataset/processed/
+dataset/reports/
+dataset/kaggle_input/
+.env
+.codex-remote-attachments/
+logs/
+models/**/*.safetensors

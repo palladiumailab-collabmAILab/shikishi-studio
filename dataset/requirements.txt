@@ -1,0 +1,4 @@
+Pillow>=10.4,<12
+ImageHash>=4.3,<5
+PyYAML>=6.0,<7
+

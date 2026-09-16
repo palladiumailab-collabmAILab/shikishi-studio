@@ -1,0 +1,22 @@
+{
+  "profiles": [
+    {
+      "id": "hotarugusa",
+      "name": "蛍草（陰陽師・原作寄せ）",
+      "prompt": "hotarugusa (onmyoji), kusa (onmyoji), petite girl, light blue bob cut, short hair, cyan blue eyes, large dark navy hair bow, silver ornamental hairpiece, white kimono collar, blue and teal japanese clothes, wide detached sleeves, yellow obi, looking at viewer, upper body, white background, official character illustration",
+      "negative_prompt": "green hair, black hair, long hair, ponytail, animal ears, fox ears, horns, fox mask, multiple people, text, watermark",
+      "lora_scale": 0.85,
+      "guidance_scale": 5.5,
+      "single_subject": true
+    },
+    {
+      "id": "yuuka",
+      "name": "早瀬ユウカ（ブルーアーカイブ）",
+      "prompt": "hayase yuuka (blue archive), looking at viewer, upper body",
+      "negative_prompt": "",
+      "lora_scale": 0.85,
+      "guidance_scale": 5.5,
+      "single_subject": true
+    }
+  ]
+}

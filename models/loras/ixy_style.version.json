@@ -1,0 +1,13 @@
+{
+  "artifact": "ixy_style.safetensors",
+  "source": "Kaggle notebook palladiumailab/notebook27d1a07f12",
+  "script_version_id": 344556067,
+  "notebook_version": 9,
+  "training_steps": 3000,
+  "training_base_model": "OnomaAIResearch/Illustrious-XL-v2.0",
+  "training_base_model_revision": null,
+  "training_base_model_sha256": null,
+  "training_result": "successful",
+  "sha256": "B168FF880C20CF9B0F4E414A824426F035AEA4061436BEF23A5906EA4CD16946",
+  "size_bytes": 42941892
+}

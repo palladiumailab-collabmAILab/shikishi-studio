@@ -1,0 +1,1 @@
+"""Shikishi Studio application package."""

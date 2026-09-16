@@ -1,0 +1,14 @@
+{
+  "models": [
+    {
+      "id": "ixy-style-final",
+      "name": "ixy_style · Kaggle Version 9 (step 3,000)",
+      "base_model": "MX4T/Illustrious-XL-v2.0-diffusers",
+      "base_model_revision": "d3b6e92692668975622e7fef65ab01c74bc15a15",
+      "training_base_model": "OnomaAIResearch/Illustrious-XL-v2.0",
+      "lora_path": "models/loras/ixy_style.safetensors",
+      "default_lora_scale": 0.85,
+      "trigger_words": ["ixy_style"]
+    }
+  ]
+}

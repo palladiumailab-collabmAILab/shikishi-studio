@@ -1,0 +1,163 @@
+.advanced[hidden],
+.reference-preview-wrap[hidden],
+#pose-reference-clear[hidden] {
+  display: none !important;
+}
+
+.reference-controls {
+  align-items: center;
+  border: 1px solid #4a4a4f;
+  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+  padding: 12px;
+}
+
+.reference-controls legend {
+  color: #eee;
+  padding: 0 6px;
+}
+
+.reference-upload {
+  background: #35353a;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+}
+
+.reference-upload input {
+  display: none;
+}
+
+.reference-status {
+  color: #aaa;
+  font-size: .85rem;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.reference-status.error {
+  color: #ff9494;
+}
+
+.reference-preview-wrap {
+  aspect-ratio: 1;
+  background: #171719;
+  border-radius: 10px;
+  grid-column: 1 / -1;
+  max-height: 300px;
+  overflow: hidden;
+  position: relative;
+}
+
+.reference-preview-wrap img {
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center;
+  width: 100%;
+}
+
+.reference-list {
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.reference-card {
+  background: #242428;
+  border: 1px solid #48484e;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.reference-card-preview {
+  aspect-ratio: 1;
+  background: #171719;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reference-card-preview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.reference-card-controls {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.reference-card-controls label {
+  justify-content: space-between;
+}
+
+.reference-card-controls input[type="range"] {
+  width: 100px;
+}
+
+.reference-remove {
+  background: #45343b;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.use-as-reference {
+  background: #3d3552;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.pose-reference-section {
+  border-top: 1px solid #48484e;
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  padding-top: 12px;
+}
+
+.pose-reference-section > strong,
+.pose-reference-section > .reference-status,
+.pose-reference-section > .reference-preview-wrap {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .reference-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.evaluation {
+  border-top: 1px solid #444;
+  padding: 8px 12px 12px;
+}
+
+.evaluation summary {
+  cursor: pointer;
+}
+
+.evaluation label {
+  display: inline-flex;
+  gap: 4px;
+  margin: 8px 8px 8px 0;
+}
+
+.evaluation input {
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.evaluation small {
+  display: block;
+  margin-top: 6px;
+}

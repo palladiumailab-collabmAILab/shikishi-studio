@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+
+docker.exe compose run --rm app python -m ruff check .
+docker.exe compose run --rm app python -m ruff format --check .
+docker.exe compose run --rm app python -m mypy src
+docker.exe compose run --rm app python -m pytest
