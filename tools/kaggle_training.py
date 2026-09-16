@@ -10,10 +10,10 @@ import subprocess
 import tempfile
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
 
 from sync_kaggle_notebook import write_notebook
 
@@ -266,7 +266,10 @@ def run(args: argparse.Namespace) -> int:
         manifest["state"] = "complete"
         manifest["finished_at"] = utc_now()
         manifest["verified_artifact"] = str(artifact_path.relative_to(run_dir))
-        manifest["artifact_sha256"] = result_metadata["artifact"]["sha256"]
+        artifact_metadata = result_metadata["artifact"]
+        if not isinstance(artifact_metadata, dict):
+            raise RuntimeError("Training result artifact metadata changed after validation")
+        manifest["artifact_sha256"] = artifact_metadata["sha256"]
         write_json_atomic(manifest_path, manifest)
         print(f"Verified Kaggle artifact: {artifact_path}")
         return 0
