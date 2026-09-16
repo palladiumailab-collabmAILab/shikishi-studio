@@ -131,6 +131,17 @@ docker run --rm shikishi-test
 
 ## Kaggle Style LoRAの自動運転
 
+DockerイメージにはKaggle CLIも含まれます。ホストへPython依存を追加せず、
+PowerShellで設定した`KAGGLE_API_TOKEN`をCompose経由でコンテナへ渡します。
+トークンは`.env`やソースへ記録・コミットしないでください。
+
+```powershell
+$env:KAGGLE_API_TOKEN = Read-Host -Prompt 'Kaggle API token'
+docker compose build shikishi
+docker compose run --rm app kaggle --version
+docker compose run --rm app kaggle kernels list
+```
+
 `kaggle/illustrious_xl_style_lora.ipynb` は、起動後に人手を介さず学習を進める設計です。
 
 - 読み取り専用のKaggle Inputから画像とcaptionを`/kaggle/working/datasets/`へ自動配置
