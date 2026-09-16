@@ -4,6 +4,8 @@ services:
       context: .
       target: development
     working_dir: /app
+    environment:
+      KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN:-}
     volumes:
       - .:/app
 
@@ -14,6 +16,7 @@ services:
     ports:
       - "8002:8000"
     environment:
+      KAGGLE_API_TOKEN: ${KAGGLE_API_TOKEN:-}
       # Change this to a mounted local directory to avoid downloading the base model.
       BASE_MODEL: ${BASE_MODEL:-MX4T/Illustrious-XL-v2.0-diffusers}
       IP_ADAPTER_WEIGHT_NAME: ${IP_ADAPTER_WEIGHT_NAME:-ip-adapter-plus_sdxl_vit-h.safetensors}
