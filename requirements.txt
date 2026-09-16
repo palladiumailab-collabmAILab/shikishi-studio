@@ -7,3 +7,4 @@ peft>=0.14,<1.0
 safetensors>=0.5,<1.0
 pillow>=10.4,<12.0
 torch>=2.5
+kaggle>=2.2,<3.0
