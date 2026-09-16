@@ -34,5 +34,7 @@ jobs:
       - name: Verify Kaggle notebook synchronization
         run: docker compose run --rm app python tools/sync_kaggle_notebook.py --check
 
-      - name: Build Kaggle runner
-        run: docker build -f Dockerfile.kaggle -t shikishi-kaggle-runner .
+      - name: Build and inspect Kaggle runner
+        run: |
+          docker build -f Dockerfile.kaggle -t shikishi-kaggle-runner .
+          docker run --rm shikishi-kaggle-runner --help

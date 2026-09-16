@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
-from tools.kaggle_training import (
+PROJECT_ROOT = Path(__file__).parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "tools"))
+
+from kaggle_training import (  # noqa: E402
     exclusive_run_lock,
     load_metadata,
     parse_status,
     validate_downloaded_output,
 )
-from tools.sync_kaggle_notebook import source_cells, synchronized
-
-PROJECT_ROOT = Path(__file__).parents[1]
+from sync_kaggle_notebook import source_cells, synchronized  # noqa: E402
 
 
 def test_parse_kaggle_status() -> None:

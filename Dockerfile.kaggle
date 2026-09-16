@@ -7,4 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY requirements-kaggle.txt .
 RUN pip install --no-cache-dir -r requirements-kaggle.txt
 
+COPY tools ./tools
+COPY kaggle ./kaggle
+
 ENTRYPOINT ["python", "tools/kaggle_training.py"]

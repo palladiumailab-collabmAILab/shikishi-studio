@@ -1,173 +1,194 @@
 # Shikishi Studio
 
-`ixy_style.safetensors` を適用して Illustrious XL で画像を生成する、会話型のローカルWebアプリです。
+`ixy_style.safetensors` を Illustrious XL に適用して画像生成する、ローカルGPU向けWebアプリです。
+KaggleでのStyle LoRA学習と、PC/Androidを使ったデモ運用を同じリポジトリで再現できるようにしています。
 
-## Dockerで起動（推奨）
+## Dockerで起動
 
-Docker Desktop が起動している状態で、次を実行します。
-
-```powershell
-docker compose up --build -d
-```
-
-ブラウザで `http://localhost:8002` を開きます（既存のローカルアプリとポートが衝突しないようにしています）。初回の画像生成時だけ Diffusers形式の Illustrious XL v2.0 ベースモデル（約7 GB）がDockerボリュームにダウンロードされます。Compose設定は NVIDIA GPU をコンテナに明示的に割り当てます。
-
-### Androidから確認する
-
-PCとAndroidを同じLANへ接続し、PCでDocker版を起動した状態で、Androidの
-ブラウザーから `http://<PCのLAN IPv4アドレス>:8002` を開きます。Windowsでは
-次のコマンドでLANアドレスを確認できます。
+通常のデモ環境ではCUDAを必須とし、起動時にベースモデルとIP-Adapterを読み込んでから
+`/readyz` が成功するようにしています。初回だけモデル取得のためインターネット接続が必要です。
+2回目以降は `hf-cache` Docker volume を再利用します。
 
 ```powershell
-Get-NetIPAddress -AddressFamily IPv4 |
-  Where-Object { $_.IPAddress -like '192.168.*' -or $_.IPAddress -like '10.*' }
+docker compose up --build -d shikishi
 ```
 
-画面の「使用モデル」にKaggle Version番号とstep数が表示されれば、対象LoRAが
-読み込まれています。アクセスできない場合は、PCとAndroidが同じネットワークに
-いること、Dockerサービスが起動中であること、TCP 8002がLAN内で許可されている
-ことを確認してください。インターネットへポート転送しないでください。
+`http://localhost:8002` を開きます。準備確認は次です。
 
-生成中にAndroidのWi-Fiが一時的に切れた場合、画面は最大約10分間、自動でPCへ
-再接続します。生成ジョブはPC側で継続するため、再送信せずに待ってください。
+```powershell
+Invoke-WebRequest http://localhost:8002/readyz
+```
 
-停止は次です。
+`200` と `{"status":"ready"}` が返るまではデモ開始扱いにしません。`/healthz` はプロセス生存のみ、
+`/readyz` はCUDA、モデルwarmup、出力領域の書き込み可否を確認します。
+
+停止:
 
 ```powershell
 docker compose down
 ```
 
-## ローカルPythonでの起動
+### Androidから確認する
+
+安全側の既定ではポート8002を `127.0.0.1` にだけ公開します。Androidから使う場合だけ、
+信頼できる専用LANまたはPCのホットスポットで明示的にLAN公開してください。
+
+```powershell
+$env:SHIKISHI_BIND_HOST = '0.0.0.0'
+docker compose up -d --force-recreate shikishi
+```
+
+Androidから `http://<PCのLAN IPv4アドレス>:8002` を開きます。インターネットへのポート転送は
+行わないでください。共有・公共Wi-Fiではなく、管理できるLANを使用してください。
+
+生成ジョブはPC側で継続します。Android側の通信が一時的に切れても約10分間再接続するため、
+同じ生成要求を再送信しないでください。
+
+### CPUで開発確認する場合
+
+デモ用ComposeはCUDA必須です。CPUだけでAPI/UIを確認する必要がある場合は明示的に解除します。
+
+```powershell
+$env:REQUIRE_CUDA = '0'
+$env:DEMO_WARMUP = '0'
+docker compose up -d shikishi
+```
+
+## デモ前チェック
+
+デモ日前にインターネット接続がある状態で一度 `shikishi` を起動し、`/readyz` が200になることを
+確認します。これによりベースモデル、LoRA、IP-Adapterを事前に読み込み、必要な公開モデルを
+Docker cacheへ取得します。
+
+最低限、実機で次を確認します。
+
+1. 通常生成 1024x1024 / 標準30 steps
+2. キャラクター参照
+3. 顔参照
+4. pose img2img
+5. 連続2〜3回の生成
+6. Androidからの再接続
+
+`models/registry.json` のLoRA情報と `models/loras/*.version.json` のSHA/来歴を確認してから使用します。
+
+## デモデータの初期化
+
+生成画像と参照画像だけを削除し、モデル・Hugging Face cacheは残します。既定はdry-runです。
+
+```powershell
+docker compose run --rm app python tools/reset_demo_data.py
+docker compose run --rm app python tools/reset_demo_data.py --yes
+```
+
+対象は `generated/` と `reference-images/` のみです。
+
+## 生成機能
+
+- `POST /api/jobs` で非同期ジョブを作成し、`GET /api/jobs/{id}` で進捗を取得
+- GPU処理は単一workerで直列化し、pending queueを上限付きで保持
+- prompt、seed、解像度、steps、CFG、LoRA強度、モデルrevision等を履歴JSONへ保存
+- PNG/JPEG/WebP参照画像を検証し、原本と正規化PNGを分離保存
+- img2img、IP-Adapter、顔refinementを必要時だけ使用
+- IP-Adapterは処理後に解放し、通常生成時のVRAM占有を抑制
+
+品質プリセットはドラフト 512x512/16 steps、標準 1024x1024/30 steps、高品質
+1024x1024/40 stepsです。
+
+## Kaggle Style LoRA学習
+
+Kaggle操作はWebアプリから分離した専用 `kaggle-runner` で行います。`KAGGLE_API_TOKEN` は
+`app` / `shikishi` へ渡らず、runnerだけが受け取ります。
+
+Kaggle設定の正本は `kaggle/kernel-metadata.json` です。現在は以下を宣言しています。
+
+- private Notebook
+- GPU有効
+- Internet有効
+- `NvidiaTeslaT4` を既定acceleratorとして指定
+- `palladiumailab/shikishi-ixy-style-v2-goal-v1` をDataset Inputとして指定
+
+実行前に、モデル重みを変更する学習を本当に開始してよいことを確認してください。実行する場合:
+
+```powershell
+$env:KAGGLE_API_TOKEN = Read-Host -Prompt 'Kaggle API token'
+$env:SHIKISHI_GIT_REVISION = git rev-parse HEAD
+docker compose --profile ops run --rm kaggle-runner
+```
+
+runnerは以下を自動実行します。
+
+1. API tokenとKaggle CLIの確認
+2. 既存Kernelが `queued/running` でないことを確認
+3. Python正本から一時Notebookを生成
+4. `kernel-metadata.json` を検証
+5. `kaggle kernels push` で投入・実行開始
+6. `kaggle kernels status` を権威状態としてpoll
+7. 失敗時だけ `kaggle kernels logs` を診断用に保存
+8. 成功後 `kaggle kernels output` で成果物を取得
+9. `shikishi-training-result.json` とLoRAのsize/SHA-256を照合
+10. `artifacts/kaggle/<run-id>/orchestration.json` に実行証跡を保存
+
+同時runは `.kaggle-run.lock` で拒否します。ブラウザ/Computer Useによる投入・status確認・output取得は
+通常運用では不要です。
+
+GPUを変更する場合:
+
+```powershell
+$env:KAGGLE_MACHINE_SHAPE = 'NvidiaL4'
+```
+
+Notebook内部にはGPU/空き容量/Inputのpreflight、互換manifestを使ったresume判定、最大3回の再試行、
+進捗JSON、最終LoRAのSHA-256検証があります。別Kaggleセッションへの完全自動resumeは、前回outputの
+`kernel_sources` 運用を実機確認するまで自動化対象外です。
+
+### Notebook同期
+
+`kaggle/illustrious_xl_style_lora.py` が正本です。
+
+```powershell
+python tools/sync_kaggle_notebook.py
+python tools/sync_kaggle_notebook.py --check
+```
+
+旧PowerShell入口もPython版を呼び出す互換wrapperとして残しています。
+
+## ローカルPython開発
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -e ".[dev]"
 uvicorn app:app --reload
 ```
 
-ブラウザで `http://127.0.0.1:8000` を開きます。初回の生成時に、既定の Illustrious XL ベースモデルがダウンロードされます（GPU推奨）。すでにローカルにベースモデルがある場合は、次のように起動できます。
+通常の再現・検証経路はDockerです。`requirements.txt` の直接依存はデモ再build時の変動を抑えるため
+検証対象versionへ固定しています。
+
+## 品質ゲート
+
+ローカルDockerとGitHub Actionsで同じ主要チェックを実行します。
 
 ```powershell
-$env:BASE_MODEL = 'C:\path\to\Illustrious-XL-v2.0'
-uvicorn app:app --reload
+docker compose build app
+docker compose run --rm app python -m ruff check .
+docker compose run --rm app python -m ruff format --check .
+docker compose run --rm app python -m mypy
+docker compose run --rm app python -m pytest
+docker compose run --rm app python tools/sync_kaggle_notebook.py --check
 ```
 
-## 構成
+GitHub ActionsはPRと `main` pushでこれらを実行し、Kaggle runnerイメージもbuildします。実Kaggle GPU
+学習はCIから起動しません。
 
-- `models/registry.json`: 利用可能なベースモデル／LoRA／推奨強度のレジストリ
-- `models/loras/ixy_style.safetensors`: Kaggle で学習した最終ステップ（3,000）のLoRA
-- `studio/services/`: GPU生成、ジョブキュー、履歴、モデルレジストリのドメイン処理
-- `studio/api.py`: HTTP APIルート
-- `static/js/`: API通信、UI部品、画面制御を分離したフロントエンド
-- `generated/`: 生成画像と、再現用パラメータを含むメタデータJSONの保存先
-- `reference-images/`: 非公開の参照原本・正規化画像・検証メタデータの保存先
+## 主な保存領域
 
-大容量の原取得物・配布ZIP・再生成可能な派生物はリポジトリ外の
-`C:\Users\palla\Documents\shikishi-artifacts\`へ分離します。正本と再生成方法は
-[ローカル保存領域](docs/storage-layout.md)を参照してください。
+- `models/registry.json`: ベースモデル/LoRA/revision
+- `models/loras/`: ローカル推論用LoRA
+- `generated/`: 生成画像と再現metadata
+- `reference-images/`: 非公開の参照原本・正規化画像
+- `artifacts/kaggle/`: Kaggle orchestration/output（Git管理外）
+- `C:\Users\palla\Documents\shikishi-artifacts\`: 大容量の学習正本・派生物
 
-## 生成ジョブ
-
-生成は非同期ジョブとして扱われます。`POST /api/jobs` が即時にジョブIDを返し、`GET /api/jobs/{id}` で状態・進捗・生成結果を取得します。これにより、重いGPU生成中もUIは応答を維持します。
-
-各履歴にはprompt、seed、解像度、steps、CFG、LoRA強度、モデルID、ベースモデル、アプリ版を保存します。
-
-「1人構図」は既定でオンです。内部で `solo` を追加し、複数人物・コラージュ・
-漫画パネル系の語をネガティブ側へ加えます。集合絵を作る場合だけオフにしてください。
-「標準等身」も既定でオンです。通常等身をpositive側へ、chibi・極端なデフォルメを
-negative側へ追加します。デフォルメ絵を作る場合だけオフにしてください。
-キャラクター名は日本語より、学習元で使われる英語タグ形式（例：
-`hayase yuuka (blue archive)`）の方が安定します。
-
-品質プリセットは、構図確認用の「ドラフト」（512×512・16 steps）、通常生成の
-「標準」（1024×1024・30 steps）、細部確認用の「高品質」（1024×1024・40 steps）
-です。ポーズ画像と低stepsの組合せで実効denoise stepsが6未満になる場合は、輪郭破綻を
-避けるため画面に警告を表示します。
-
-「詳細」の「キャラ補正」には、原作外見へ寄せる検証済みプロンプトがあります。
-蛍草は学習データに含まれないため完全な固有デザインの再現は保証できませんが、
-「蛍草（陰陽師・原作寄せ）」で黒髪・緑白の和装・蒲公英を優先できます。
-
-「キャラクター参照」ではPNG・JPEG・WebP（10MB以下）を最大6枚選び、画像ごとに
-「全体・衣装」または「顔」の役割、切り抜き中心、拡大率を指定できます。同じ画像を
-全体用と顔の拡大用に2回使うこともできます。全体をPlus ViT-H版で生成した後、
-Plus Face版を弱いimg2imgとして順番に適用するため、両モデルをGPUへ同時搭載しません。
-
-姿勢は「ポーズ指示」へ短い英語タグを入力する方法が基本です。構図画像が必要な場合だけ
-「ポーズ・構図画像」を追加してください。生成履歴の「基準画像に追加」を押すと、良かった
-出力を次のキャラクター参照へコピーできます。元の生成画像は変更・削除されません。
-同一画像はSHA-256で再利用され、参照原本を重複保存しません。同じ参照IDをUI上で
-「全体・衣装」と「顔」の2役に使うことは可能です。
-
-IP-Adapterは追加VRAMを常時占有しないよう、対象生成の間だけ読み込み、完了後に解放
-します。初回利用時は追加モデルの取得に時間がかかります。既定の全体強度は0.30、
-顔強度は0.25です。参照が強すぎてポーズや背景が固定される場合は0.05ずつ下げます。
-IP-Adapterは固定revisionのsafetensorsを使い、取得済み
-ファイルの来歴とSHA-256は `models/ip_adapter.version.json` に記録しています。
-通常版との比較が必要な場合は、次の設定で切り替えて再作成します。
-
-```powershell
-$env:IP_ADAPTER_WEIGHT_NAME = 'ip-adapter_sdxl.safetensors'
-$env:IP_ADAPTER_IMAGE_ENCODER_SUBFOLDER = 'sdxl_models/image_encoder'
-docker compose up -d --force-recreate shikishi
-```
-
-Plus版へ戻す場合は両方の環境変数を削除して同じ再作成コマンドを実行します。
-
-課題ごとの判断、受入条件、保留条件は
-[docs/issue-resolution-plan.md](docs/issue-resolution-plan.md) に記録しています。
-
-## テスト
-
-テスト専用Dockerターゲットを使います。
-
-```powershell
-docker build --target test -t shikishi-test .
-docker run --rm shikishi-test
-```
-
-ベースモデルはサイズが大きいため、リポジトリには含めません。
-
-## Kaggle Style LoRAの自動運転
-
-DockerイメージにはKaggle CLIも含まれます。ホストへPython依存を追加せず、
-PowerShellで設定した`KAGGLE_API_TOKEN`をCompose経由でコンテナへ渡します。
-トークンは`.env`やソースへ記録・コミットしないでください。
-
-```powershell
-$env:KAGGLE_API_TOKEN = Read-Host -Prompt 'Kaggle API token'
-docker compose build shikishi
-docker compose run --rm app kaggle --version
-docker compose run --rm app kaggle kernels list
-```
-
-`kaggle/illustrious_xl_style_lora.ipynb` は、起動後に人手を介さず学習を進める設計です。
-
-- 読み取り専用のKaggle Inputから画像とcaptionを`/kaggle/working/datasets/`へ自動配置
-- 学習プロセスが異常終了した場合、最新の保存済みstateから最大3回まで自動再試行
-- `/kaggle/working/automation/status.json`へ進捗と再試行状態を保存
-- 第1エポックが15%へ到達すると、`first_epoch_15_percent.json`を証跡として保存
-- 学習中のstateを200stepごとに保存し、同じexperiment・run ID・モデル指紋の
-  Kaggle出力を次回Inputへ追加すれば自動再開
-- `SHIKISHI_RUN_ID`で再開対象の系統を明示（未指定時はexperiment ID）
-- 最終LoRAのサイズ・更新・SHA-256を検証し、結果metadataを原子的に保存
-
-Python形式のNotebookソースを変更した場合は、次のコマンドで`.ipynb`を同期します。
-
-```powershell
-.\tools\sync_kaggle_notebook.ps1
-```
-
-通常運用で想定するCodexの介入は、修正版NotebookをKaggleへ投入して実行を開始する1回だけです。GPU割当・Dataset Input・Internet設定はKaggle側で事前に設定されている必要があります。
-
-## ソース配布
-
-コミット済みソースをZIP化する場合は `git archive` を使用します。
-
-```powershell
-git archive --format=zip --output ..\shikishi-source.zip HEAD
-```
-
-`.gitattributes` により、LoRA重み、生成画像、参照画像、キャッシュ、データセットなどの
-ローカル成果物は配布ZIPから除外されます。
+詳細は [docs/storage-layout.md](docs/storage-layout.md) と
+[docs/issue-resolution-plan.md](docs/issue-resolution-plan.md) を参照してください。
