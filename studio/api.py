@@ -7,6 +7,7 @@ from typing import cast
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 
+from studio.auth import ApplicationAuth
 from studio.schemas import (
     CharacterProfileSummary,
     EvaluationRecord,
@@ -45,6 +46,10 @@ def character_profiles(request: Request) -> CharacterProfileStore:
 
 def reference_images(request: Request) -> ReferenceImageStore:
     return cast(ReferenceImageStore, request.app.state.reference_images)
+
+
+def application_auth(request: Request) -> ApplicationAuth:
+    return cast(ApplicationAuth, request.app.state.auth)
 
 
 @router.get("/api/status", response_model=StatusResponse)
@@ -186,7 +191,12 @@ def readiness(request: Request) -> JSONResponse:
     ):
         if not path.is_dir() or not os.access(path, os.W_OK):
             issues.append(name)
-    payload = {"status": "ready" if not issues else "not_ready", "issues": issues}
+    status = "ready" if not issues else "not_ready"
+    payload: dict[str, object]
+    if settings.auth_enabled and not application_auth(request).is_authenticated(request):
+        payload = {"status": status}
+    else:
+        payload = {"status": status, "issues": issues}
     return JSONResponse(status_code=200 if not issues else 503, content=payload)
 
 
