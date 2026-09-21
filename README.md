@@ -86,7 +86,7 @@ docker compose run --rm app python tools/reset_demo_data.py --yes
 
 WindowsでROG PhoneをUSB接続し、端末のロックを解除してUSB用途を「ファイル転送」にすると、
 次の監視スクリプトで `DCIM`・`Pictures`・`Movies` の画像・動画を
-`C:\Users\palla\Documents\shikishi-artifacts\rog-phone-media\` へ取り込めます。
+既定では `%USERPROFILE%\Documents\shikishi-artifacts\rog-phone-media\` へ取り込めます。
 端末上の原本は削除・移動せず、ローカルの一時領域へ転送してSHA-256を確認してから保存します。
 
 初回だけPowerShell 5.1でタスクを登録します。
@@ -216,7 +216,7 @@ GitHub ActionsはPRと `main` pushでこれらを実行し、Kaggle runnerイメ
 - `generated/`: 生成画像と再現metadata
 - `reference-images/`: 非公開の参照原本・正規化画像
 - `artifacts/kaggle/`: Kaggle orchestration/output（Git管理外）
-- `C:\Users\palla\Documents\shikishi-artifacts\`: 大容量の学習正本・派生物
+- `SHIKISHI_ARTIFACTS_ROOT`（未指定時は `%USERPROFILE%\Documents\shikishi-artifacts\`）: 大容量の学習正本・派生物
 
 詳細は [docs/storage-layout.md](docs/storage-layout.md) と
 [docs/issue-resolution-plan.md](docs/issue-resolution-plan.md) を参照してください。
