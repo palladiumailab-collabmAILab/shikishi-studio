@@ -11,6 +11,8 @@
 - Never train, fine-tune, merge, rewrite, overwrite, or otherwise mutate model weights without first stating exactly what will change and obtaining explicit approval. Save approved training results as new, versioned, provenance-recorded artifacts unless overwrite is explicitly approved.
 - Do not hardcode secrets. Use environment variables and document new variables in `.env.example`.
 
+- Loopback-only mode may omit application auth; any non-loopback/LAN exposure must require application authentication and must fail closed when the auth token is not configured.
+
 ## Verification
 
 For Python/runtime changes, use:
