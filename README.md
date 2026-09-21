@@ -224,7 +224,7 @@ GitHub ActionsはPRと `main` pushでこれらを実行し、Kaggle runnerイメ
 - `generated/`: 生成画像と再現metadata
 - `reference-images/`: 非公開の参照原本・正規化画像
 - `artifacts/kaggle/`: Kaggle orchestration/output（Git管理外）
-- `C:\Users\palla\Documents\shikishi-artifacts\`: 大容量の学習正本・派生物
+- `SHIKISHI_ARTIFACTS_ROOT`（未指定時は `%USERPROFILE%\Documents\shikishi-artifacts\`）: 大容量の学習正本・派生物
 
 詳細は [docs/storage-layout.md](docs/storage-layout.md) と
 [docs/issue-resolution-plan.md](docs/issue-resolution-plan.md) を参照してください。
