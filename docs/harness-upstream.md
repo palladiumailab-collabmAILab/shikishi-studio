@@ -1,12 +1,29 @@
 # Codex harness upstream
 
-The common Codex development harness used by this repository is sourced from:
+The shared Codex development harness in this repository is sourced from:
 
 - repository: `palladiumailab-collabmAILab/codex-dev-harness`
-- source revision: `25a3929cdcdba856fd1cc4e45cccf5726132f478`
+- source revision: `d8b465a53f5c22c81803a1ddb5fdc9ddfa596210`
 
-The upstream harness is the canonical source for the shared operating contract, baseline, generic skills, templates, and harness utility scripts copied into this repository.
+## Ownership
 
-When the same shared file changes upstream, update this repository from the upstream version rather than maintaining an independent fork. Project-specific rules may refine the common harness for Shikishi Studio, but should remain visibly separated from the shared contract and must not silently weaken it.
+The upstream repository is the canonical source for all shared harness content. Files listed below are upstream-managed and must not be edited independently in this downstream repository. Project-specific rules belong in `AGENTS.project.md` or other explicitly project-specific files.
 
-Project-specific material includes `rules/`, the Shikishi-specific skills, application/runtime configuration, model-weight safeguards, Kaggle workflow rules, and the Shikishi quality commands.
+When a shared rule needs to change:
+
+1. change and validate it in `codex-dev-harness`;
+2. record the new upstream revision here;
+3. synchronize the managed files from that revision;
+4. keep downstream-only changes out of the managed files.
+
+## Upstream-managed files
+
+- `AGENTS.md`
+- `docs/project-baseline.md`
+- `docs/harness-architecture.md`
+- `skills/repo-research/SKILL.md`
+- `skills/github-operations/SKILL.md`
+- `skills/self-improvement/SKILL.md`
+- `skills/long-running-work/SKILL.md`
+- `templates/codex-progress.md`
+- `templates/project-specs/README.md`
