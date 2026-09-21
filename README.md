@@ -82,6 +82,34 @@ docker compose run --rm app python tools/reset_demo_data.py --yes
 
 対象は `generated/` と `reference-images/` のみです。
 
+## ROG Phoneの画像・動画自動取り込み
+
+WindowsでROG PhoneをUSB接続し、端末のロックを解除してUSB用途を「ファイル転送」にすると、
+次の監視スクリプトで `DCIM`・`Pictures`・`Movies` の画像・動画を
+`C:\Users\palla\Documents\shikishi-artifacts\rog-phone-media\` へ取り込めます。
+端末上の原本は削除・移動せず、ローカルの一時領域へ転送してSHA-256を確認してから保存します。
+
+初回だけPowerShell 5.1でタスクを登録します。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\watch-rog-phone-media.ps1 -Install
+```
+
+取り込み状態は `import-state.jsonl`、接続・未準備・失敗・完了は `import-log.jsonl` に記録します。
+同じ相対パス・サイズ・端末更新日時のファイルは再取り込みせず、同名で内容が異なる場合は
+SHA-256の先頭12文字を付けて別名保存します。保存先を変える場合は
+`SHIKISHI_ARTIFACTS_ROOT` または `-DestinationRoot` を指定します。
+
+ワンショット確認と無効化:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\watch-rog-phone-media.ps1 -Once -DryRun -Verbose
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\watch-rog-phone-media.ps1 -Once -Verbose
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\watch-rog-phone-media.ps1 -Uninstall
+```
+
+端末がロック中または充電専用の場合は `not-ready` として記録し、端末側の原本には触れません。
+
 ## 生成機能
 
 - `POST /api/jobs` で非同期ジョブを作成し、`GET /api/jobs/{id}` で進捗を取得

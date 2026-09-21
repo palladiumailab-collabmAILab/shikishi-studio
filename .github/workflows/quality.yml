@@ -38,6 +38,21 @@ jobs:
       - name: Verify Kaggle notebook synchronization
         run: docker compose run --rm app python tools/sync_kaggle_notebook.py --check
 
+      - name: Validate Windows media watcher syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            'scripts/watch-rog-phone-media.ps1',
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+
       - name: Build and inspect Kaggle runner
         run: |
           docker build -f Dockerfile.kaggle -t shikishi-kaggle-runner .

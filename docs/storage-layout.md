@@ -8,6 +8,7 @@
 | `models/loras/` | ローカル推論用LoRA | 保持 |
 | `generated/` | 生成画像と再現メタデータ | 保持 |
 | `reference-images/` | 参照原本・正規化画像 | 保持・非公開 |
+| `C:\Users\palla\Documents\shikishi-artifacts\rog-phone-media\` | ROG Phoneから取り込んだ画像・動画とJSONL証跡 | リポジトリ外で保持 |
 | `dataset/reports/` | データ処理の証跡 | 保持 |
 | `C:\Users\palla\Documents\shikishi-artifacts\` | 原取得物、配布ZIP、退避済み派生物 | リポジトリ外で保管 |
 
