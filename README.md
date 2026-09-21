@@ -30,16 +30,24 @@ docker compose down
 
 ### Androidから確認する
 
-安全側の既定ではポート8002を `127.0.0.1` にだけ公開します。Androidから使う場合だけ、
-信頼できる専用LANまたはPCのホットスポットで明示的にLAN公開してください。
+安全側の既定ではポート8002を `127.0.0.1` にだけ公開し、認証を省略できます。Androidから使う場合は、
+まず認証トークンを生成してから、信頼できる専用LANまたはPCのホットスポットへ公開してください。
 
 ```powershell
+$env:SHIKISHI_AUTH_TOKEN = python tools/generate_auth_token.py
 $env:SHIKISHI_BIND_HOST = '0.0.0.0'
 docker compose up -d --force-recreate shikishi
 ```
 
-Androidから `http://<PCのLAN IPv4アドレス>:8002` を開きます。インターネットへのポート転送は
+Androidから `http://<PCのLAN IPv4アドレス>:8002` を開き、トークンを入力してログインします。
+LAN公開時は、`SHIKISHI_AUTH_TOKEN` が未設定だとアプリが起動せず、API・履歴・参照画像・生成画像・
+ダウンロードは認証なしでは利用できません。APIクライアントは
+`Authorization: Bearer $env:SHIKISHI_AUTH_TOKEN` を送ります。インターネットへのポート転送は
 行わないでください。共有・公共Wi-Fiではなく、管理できるLANを使用してください。
+
+ブラウザのセッションは既定で24時間有効です。変更する場合は
+`SHIKISHI_AUTH_SESSION_TTL_SECONDS` を設定します。LANモードは専用ネットワークで使い、必要に応じて
+TLS終端プロキシを併用してください。
 
 生成ジョブはPC側で継続します。Android側の通信が一時的に切れても約10分間再接続するため、
 同じ生成要求を再送信しないでください。
