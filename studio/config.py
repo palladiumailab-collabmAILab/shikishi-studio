@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +22,16 @@ def _env_bool(name: str, default: bool) -> bool:
     raise ValueError(f"{name} must be a boolean value")
 
 
+def is_loopback_bind_host(host: str) -> bool:
+    normalized = host.strip().lower().strip("[]")
+    if normalized == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(normalized).is_loopback
+    except ValueError:
+        return False
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     root_dir: Path
@@ -33,6 +44,9 @@ class Settings:
     device: str
     torch_dtype: torch.dtype
     app_version: str
+    bind_host: str
+    auth_token: str | None
+    auth_session_ttl_seconds: int
     max_queue_size: int
     job_retention_seconds: int
     max_completed_jobs: int
@@ -49,6 +63,10 @@ class Settings:
     demo_warmup: bool
     demo_preload_ip_adapter: bool
 
+    @property
+    def auth_enabled(self) -> bool:
+        return self.auth_token is not None or not is_loopback_bind_host(self.bind_host)
+
     @classmethod
     def from_environment(cls) -> Settings:
         root_dir = Path(__file__).resolve().parent.parent
@@ -57,6 +75,17 @@ class Settings:
         reference_dir = root_dir / "reference-images"
         reference_dir.mkdir(exist_ok=True)
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        bind_host = os.getenv("SHIKISHI_BIND_HOST", "127.0.0.1").strip() or "127.0.0.1"
+        auth_token = os.getenv("SHIKISHI_AUTH_TOKEN", "").strip() or None
+        if not is_loopback_bind_host(bind_host) and auth_token is None:
+            raise ValueError(
+                "SHIKISHI_AUTH_TOKEN is required when SHIKISHI_BIND_HOST is non-loopback"
+            )
+        if auth_token is not None and len(auth_token) < 24:
+            raise ValueError("SHIKISHI_AUTH_TOKEN must contain at least 24 characters")
+        auth_session_ttl_seconds = int(os.getenv("SHIKISHI_AUTH_SESSION_TTL_SECONDS", "86400"))
+        if auth_session_ttl_seconds <= 0:
+            raise ValueError("SHIKISHI_AUTH_SESSION_TTL_SECONDS must be positive")
         return cls(
             root_dir=root_dir,
             static_dir=root_dir / "static",
@@ -68,6 +97,9 @@ class Settings:
             device=device,
             torch_dtype=torch.float16 if device == "cuda" else torch.float32,
             app_version=os.getenv("APP_VERSION", __version__),
+            bind_host=bind_host,
+            auth_token=auth_token,
+            auth_session_ttl_seconds=auth_session_ttl_seconds,
             max_queue_size=int(os.getenv("MAX_QUEUE_SIZE", "8")),
             job_retention_seconds=int(os.getenv("JOB_RETENTION_SECONDS", "86400")),
             max_completed_jobs=int(os.getenv("MAX_COMPLETED_JOBS", "200")),
