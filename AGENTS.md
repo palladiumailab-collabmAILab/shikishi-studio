@@ -1,67 +1,49 @@
 # Codex Software Development Harness
 
-This file starts from the canonical common contract in `palladiumailab-collabmAILab/codex-dev-harness`. The common harness is the source of truth; Shikishi Studio-specific rules are isolated in the final section. See `docs/harness-upstream.md` for the pinned upstream revision.
+システム・開発者指示、ユーザーの明示依頼、現在地に近い `AGENTS.override.md` / `AGENTS.md` を優先します。このファイルは常時読む最小ルータです。
 
-このファイルは全作業に必要な不変条件だけを定義します。システム・開発者指示とユーザーの明示依頼を優先し、リポジトリ内では現在地に近い `AGENTS.override.md` / `AGENTS.md` を優先します。条件付きの詳細手順は該当する skill だけを読みます。
+## 正本
 
-## 不変条件
+- 共通ハーネスの正本は `palladiumailab-collabmAILab/codex-dev-harness`。
+- 下流へコピーした共通ファイルは upstream-managed とし、プロジェクト固有規則は `AGENTS.project.md` 等へ分離する。
+- 共通規則の変更は正本で検証してから pinned revision で下流へ同期する。
 
-- 依頼の目的、変更範囲、受け入れ条件を先に確認する。実装方針または完了判定を左右する曖昧さが残る場合は勝手に補完せず、ユーザーに確認する。
-- 長期に有効な製品・システム仕様は対象リポジトリの `docs/specs/` を正本として扱う。関連仕様がある変更では先に参照し、仕様と実装が矛盾する場合は黙ってどちらかへ寄せず矛盾を明示する。
-- テスト、lint、build、調査結果は受け入れ条件を裏づける証拠として扱い、それ自体をタスク完了や実質的な進捗とみなさない。テスト・評価器・閾値を合格のためだけに弱めない。
-- 依頼されていない機能・依存関係・外部連携・大規模リファクタリングを追加しない。
-- 作業前に既存の未コミット変更を確認して保持する。`git reset --hard`、`git clean`、`git checkout --` 等で他者の変更を捨てない。
-- 最寄りの指示、対象コード、関連仕様、関連テスト、必要な設定だけを読む。無目的な全件走査や巨大ログの展開を避ける。
-- 変更は小さく目的単位に保ち、既存の構成・命名・依存関係・フォーマッタ・パッケージマネージャを尊重する。
-- 実行可能なソフトウェアは Docker で再現可能な開発・検証経路を持たせる。ホストでの直接実行は高速化のために使ってよいが、Dockerで再現できない状態を完成扱いしない。
-- Python を含むリポジトリでは、新規・既存を問わず Ruff を lint / format の標準品質ゲートとして使用する。型検査やテストなどRuffと直交する検証は必要に応じて維持する。
-- GitHubで管理する実行可能なソフトウェアでは、GitHub Actions を標準の遠隔品質ゲートとする。PRで lint / format、テスト、型チェック、build、その他プロジェクト固有の検証を適用範囲に応じて実行し、ローカル検証の成功だけで完了扱いしない。期待されるCIが存在しない、実行不能、または失敗している場合は、その状態を解消するか明示的なブロッカーとして報告する。
-- 変更後は差分を再確認し、変更に比例したテスト・型チェック・lint・build・手動確認を行う。実行できない検証は理由を明記する。
-- 秘密情報、秘密鍵、トークン、不要な個人情報を出力・コミット・外部送信しない。
-- 依頼のないデプロイ、外部書き込み、課金、データ削除、権限変更、force push を行わない。
+## モデルプロファイル
 
-## 標準ワークフロー
+実行中のモデルに対応するものを **1つだけ** 読みます。
 
-1. 目的・制約・受け入れ条件・変更対象を短く整理し、重要な曖昧さは実装前にユーザーへ確認する。
-2. 関連する `docs/specs/`、コード、テストを根拠付きで調査する。
-3. 最小の変更を実装する。
-4. 変更に比例したローカル検証を実行する。
-5. GitHubへ反映する作業では、対象commit / PRのGitHub Actions結果を確認する。
-6. 各受け入れ条件を満たす証拠を確認し、変更内容、検証結果、残るリスクだけを簡潔に報告する。
+- GPT-6 Astra: `profiles/astra/AGENTS.md`
+- GPT-5.6 Sol / Luna: `profiles/sol-luna/AGENTS.md`
+- その他: モデル固有プロファイルを推測で流用しない。
 
-## モデルルーティング
+## 共通不変条件
 
-- 既定: `gpt-5.6-sol / medium` — 実装、設計、デバッグ、レビュー、最終統合。
-- Sol利用枠を温存する限定worker: `gpt-5.6-luna / max` — 候補抽出、機械的変換、限定探索、独立した読み取り中心の確認。
-- Luna/max が受け入れ条件を満たさない、または局所探索を越える判断が必要なら、同じ失敗を反復せず証拠を短く引き継いで Sol/medium へ昇格する。
-- 追加のモデルやrouting分岐は、ユーザー指定または repo-local eval で利用枠・速度・品質の測定可能な改善が確認された場合だけ導入する。
+- 依頼された成果、明示制約、受け入れ条件を変更しない。
+- durable な仕様変更では、関連する正本仕様だけを先に確認する。
+- test / lint / build / 評価は証拠であり成果そのものではない。合格のためだけに条件や評価器を弱めない。
+- 最小の変更面に限定し、依頼外の機能・依存・大規模リファクタを追加しない。
+- 既存の未コミット変更を保持し、破壊的 reset / clean / force push を既定にしない。
+- 秘密情報を出力・コミット・外部送信しない。依頼のないデプロイ、課金、削除、権限変更、外部書込みを行わない。
+- 同じ情報を目的なく再読込せず、状態変化のない同一検証を反復しない。
 
-## Skill の入口
+## 条件付き参照
 
-- `repo-research`: 未知のリポジトリ、複雑な依存関係、外部仕様を実装前に調査するとき。
-- `github-operations`: GitHubへの作成・同期・push/pull・Issue・PR等を明示的に依頼されたとき。
-- `self-improvement`: agent/workflow を評価付きで反復改善するとき。
-- `long-running-work`: 長時間または複数セッションにまたがる作業を分割・引き継ぐとき。
-- その他の skill は、その frontmatter の適用条件を満たす場合だけ読みます。
+必要な項目だけ読みます。通常実装で `docs/project-baseline.md` 全体を先読みしません。
 
-GitHub操作の明示依頼がない通常のローカル開発では、GitHubへ自動的に書き込みません。
+- 仕様の正本・仕様変更: `docs/baselines/specifications.md`
+- Docker / 再現環境を変更・追加: `docs/baselines/docker.md`
+- GitHub Actions / remote quality gate を変更・確認: `docs/baselines/github-ci.md`
+- Python lint / format / Ruff を変更・追加: `docs/baselines/python-ruff.md`
+- task contract / evaluation / optimization semantics を変更: `docs/harness-architecture.md`
+- セッション間 handoff が必要: `templates/codex-progress.md`
+- モデル別タスク依頼を組み立てる: `templates/task-prompts/`
 
-## 検証の比例性
+## Skill 発火条件
 
-- 可逆で影響の小さい変更では、実装をそのまま写すだけのテストを増やさない。
-- バグ修正、公開API、永続化、認証・認可、並行性、課金、セキュリティでは回帰を示す検証を優先する。
-- 同じ検証を再実行しても実装・成果物・判断材料が変わらない場合は進捗と数えず、戦略変更、ブロッカー提示、追加確認のいずれかに切り替える。
+- `repo-research`: 未知のrepoで複数モジュールを横断して入口・依存・実行経路を特定するとき。
+- `github-operations`: branch / commit / push / Issue / PR / CI / remote mutation を明示依頼されたとき。
+- `self-improvement`: baseline と評価基準を固定して agent / prompt / tool / workflow を反復比較するとき。
+- `long-running-work`: 通常の1実装パスで完了せず、複数の大きな段階またはセッション間handoffが必要なとき。
+- `reverse-engineering`: 許可された opaque / legacy / binary / protocol を互換性・移行・診断・防御目的で解析するとき。
 
-## Shikishi Studio 固有ルール
-
-- Build and maintain Shikishi Studio as a Python application with small, reviewable changes.
-- Use [rules/README.md](rules/README.md) as the project-specific rule index. Follow the matching architecture, reliability, data-processing, testing, security, operations, UI, Python, Git, and Docker rule files.
-- Consult [skills/python-development/SKILL.md](skills/python-development/SKILL.md) for Python implementation/refactoring/review, [skills/python-dependency-selection/SKILL.md](skills/python-dependency-selection/SKILL.md) when a material dependency choice is open, and [skills/codebase-health-review/SKILL.md](skills/codebase-health-review/SKILL.md) for explicit repository-health work.
-- Keep reusable CLI/data-processing code in `src/shikishi/`, web/API code in `app.py` and `studio/`, browser assets in `static/`, and tests in `tests/`.
-- Validate data at external boundaries and raise actionable errors. Never silently discard invalid input.
-- Preserve source data. Write transformed data and generated artifacts to separate, traceable locations.
-- Never train, fine-tune, merge, rewrite, overwrite, or otherwise mutate model weights without first telling the user exactly what will change and receiving explicit approval for that weight-changing operation. Prefer dedicated, reviewable training tools such as the Kaggle notebook. Inference-only adapter scales, downloading an unchanged published artifact, and checksum verification do not mutate weights. Save approved training results as new, versioned, provenance-recorded artifacts unless overwrite is explicitly approved.
-- Do not hardcode secrets. Use environment variables and document newly introduced variables in `.env.example`.
-- For Python/runtime changes, the project quality path is `docker compose build app`, `docker compose run --rm app python -m ruff check .`, `docker compose run --rm app python -m ruff format --check .`, `docker compose run --rm app python -m mypy`, and `docker compose run --rm app python -m pytest`.
-- Documentation-only and other narrowly scoped changes may use a smaller check when the omitted gates cannot exercise the changed surface.
-- Keep commits focused and use conventional prefixes. Do not include unrelated changes, secrets, virtual environments, caches, generated artifacts, or machine-specific configuration.
+該当する `SKILL.md` だけ読み、全skillを事前読込しません。

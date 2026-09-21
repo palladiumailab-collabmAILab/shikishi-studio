@@ -1,6 +1,6 @@
 ---
 name: self-improvement
-description: Evaluate and improve an agent workflow without blindly accumulating prompt patches. Use when iteratively optimizing prompts, tools, parsers, rules, or workflows against measurable outcomes.
+description: Optimize an existing agent, prompt, tool, parser, rule set, or workflow by generating bounded candidates and comparing them against a baseline with explicit evaluation criteria. Do not use for a one-off rewrite.
 ---
 
 # Self-improvement harness

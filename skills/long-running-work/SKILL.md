@@ -1,6 +1,6 @@
 ---
 name: long-running-work
-description: Structure long-running or multi-session software work into small verifiable units with a compact handoff. Use only when the task is too large for one clean implementation pass or must continue across sessions.
+description: Create a durable handoff when software work cannot finish in one normal implementation pass and must span multiple substantial stages or sessions. Do not use merely because a task has several steps.
 metadata:
   short-description: Split and hand off long-running work
 ---
