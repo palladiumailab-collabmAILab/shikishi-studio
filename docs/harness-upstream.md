@@ -10,3 +10,8 @@ The upstream harness is the canonical source for the shared operating contract, 
 When the same shared file changes upstream, update this repository from the upstream version rather than maintaining an independent fork. Project-specific rules may refine the common harness for Shikishi Studio, but should remain visibly separated from the shared contract and must not silently weaken it.
 
 Project-specific material includes `rules/`, the Shikishi-specific skills, application/runtime configuration, model-weight safeguards, Kaggle workflow rules, and the Shikishi quality commands.
+
+## Applied overlays
+
+- testing governance / Sol-Luna role split: `4e0ad32b680451610b3f601e982cc5b04956bf1b`
+- synchronized files: `AGENTS.md`, `docs/testing-governance.md`
