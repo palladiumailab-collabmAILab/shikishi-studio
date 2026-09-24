@@ -8,7 +8,7 @@ This file starts from the canonical common contract in `palladiumailab-collabmAI
 
 - 依頼の目的、変更範囲、受け入れ条件を先に確認する。実装方針または完了判定を左右する曖昧さが残る場合は勝手に補完せず、ユーザーに確認する。
 - 長期に有効な製品・システム仕様は対象リポジトリの `docs/specs/` を正本として扱う。関連仕様がある変更では先に参照し、仕様と実装が矛盾する場合は黙ってどちらかへ寄せず矛盾を明示する。
-- テスト、lint、build、調査結果は受け入れ条件を裏づける証拠として扱い、それ自体をタスク完了や実質的な進捗とみなさない。テスト・評価器・閾値を合格のためだけに弱めない。
+- テスト、lint、build、調査結果は受け入れ条件を裏づける証拠として扱う。既存 oracle を実装へ追随させず、テスト変更は `docs/testing-governance.md` に従う。テスト・評価器・閾値を合格のためだけに弱めない。
 - 依頼されていない機能・依存関係・外部連携・大規模リファクタリングを追加しない。
 - 作業前に既存の未コミット変更を確認して保持する。`git reset --hard`、`git clean`、`git checkout --` 等で他者の変更を捨てない。
 - 最寄りの指示、対象コード、関連仕様、関連テスト、必要な設定だけを読む。無目的な全件走査や巨大ログの展開を避ける。
@@ -31,10 +31,10 @@ This file starts from the canonical common contract in `palladiumailab-collabmAI
 
 ## モデルルーティング
 
-- 既定: `gpt-5.6-sol / medium` — 実装、設計、デバッグ、レビュー、最終統合。
-- Sol利用枠を温存する限定worker: `gpt-5.6-luna / max` — 候補抽出、機械的変換、限定探索、独立した読み取り中心の確認。
-- Luna/max が受け入れ条件を満たさない、または局所探索を越える判断が必要なら、同じ失敗を反復せず証拠を短く引き継いで Sol/medium へ昇格する。
-- 追加のモデルやrouting分岐は、ユーザー指定または repo-local eval で利用枠・速度・品質の測定可能な改善が確認された場合だけ導入する。
+- Sol (`gpt-5.6-sol / medium`) — 要求整理、計画、設計、受け入れ条件、テスト設計、protected oracle 判断、難しいデバッグ、レビュー、最終統合。
+- Luna (`gpt-5.6-luna / max`) — Sol が境界を定めた実装、機械的変更、新規 unit test、test 実行、局所デバッグ。
+- Luna は green 化のために既存 assertion / expected / golden / snapshot、regression / acceptance / contract test、skip / xfail / deletion を変更しない。test bug / specification unresolved を疑う場合は失敗と独立根拠を保持して Sol へ戻し、protected-oracle change は review PR に留める。
+- Luna が局所判断を越える、または同じ失敗を反復する場合は Sol へ戻す。追加 routing はユーザー指定または repo-local eval で測定可能な改善がある場合だけ導入する。
 
 ## Skill の入口
 
